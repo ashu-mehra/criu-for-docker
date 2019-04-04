@@ -3,9 +3,11 @@ Automate the process of checkpoint-restore in Docker
 
 ## Scripts run on host
 
-**driver.sh:** Main script that creates a temporary image, starts the container and commits the container to create new image with the checkpoint.
+**driver.sh:** Main script that creates a temporary docker image, starts the container and commits the container to create new image with the checkpoint.
 
 **run_app_docker_image.sh:** Trampoline script that just invokes the application specific script or commands for starting the containers. It has two variables `app_image` and `app_container` to indicate the docker image and container name to be used by the application specific code.
+
+**Dockerfile:** Used by `driver.sh` to create a temporary docker image that has `criu` and the scripts for checkpointing the application. Application needs to update the base image to be used by `FROM` instruction.
 
 ## Scripts run in the container
 
