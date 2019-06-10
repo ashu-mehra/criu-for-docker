@@ -1,4 +1,4 @@
-FROM <application docker image>
+FROM ashumehra/acmeair-monolithic:latest
 
 USER root
 RUN apt-get update && apt-get install -y --no-install-recommends criu iptables sudo vim psmisc \

@@ -11,7 +11,7 @@ check_server_started() {
                 local app_started=$?
                 if [ ${app_started} -eq 0 ]; then
                         echo "INFO: Application started successfully!"
-                        break
+			break
                 else
                         if [ $retry_counter -eq ${TIMEOUT} ]; then
                                 echo "ERROR: Application did not start properly"
@@ -23,12 +23,22 @@ check_server_started() {
         done
 }
 
+get_server_pid() {
+	echo `ps -ef | grep java | grep -v grep | awk '{ print $2 }'`
+}
+
 start_app() {
-	# add code to start the application here.
-	# write application pid to ${CR_LOG_DIR}/${APP_PID_FILE} file
+	/opt/ibm/helpers/runtime/docker-server.sh /opt/ibm/wlp/bin/server run defaultServer &
+	check_server_started
+	if [ $? -eq 0 ]; then
+		app_pid=$(get_server_pid)
+		echo "INFO: Writing app pid ${app_pid} to ${CR_LOG_DIR}/${APP_PID_FILE}"
+		echo "${app_pid}" > ${CR_LOG_DIR}/${APP_PID_FILE}
+	fi
 }
 
 stop_app() {
-	# add code to stop the application here
+	echo "Stopping application"
+	/opt/ibm/wlp/bin/server stop defaultServer
 }
 
