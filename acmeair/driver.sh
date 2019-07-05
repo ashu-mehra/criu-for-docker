@@ -7,8 +7,11 @@ tmp_image_name="${APP_DOCKER_IMAGE}-tmp"
 container_name="app-container-for-cr"
 
 build_docker_image() {
-	sed -i -e "s|<app image>|$APP_DOCKER_IMAGE|" Dockerfile
-	cmd="docker build --build-arg user=1001 -q -t "${tmp_image_name}" -f Dockerfile ."
+	if [ -z "${DOCKER_IMAGE_OS}" ]; then
+		DOCKER_IMAGE_OS=ubuntu
+	fi
+	sed -i -e "s|<app image>|$APP_DOCKER_IMAGE|" Dockerfile.${DOCKER_IMAGE_OS}
+	cmd="docker build -q --build-arg user=${CONTAINER_USER} -t "${tmp_image_name}" -f Dockerfile.${DOCKER_IMAGE_OS} ."
 	echo "CMD: ${cmd}"
 	${cmd}
 
@@ -29,31 +32,53 @@ run_container() {
 	fi
 }
 
-wait_for_checkpoint() {
+check_server_started() {
         local retry_counter=0
         while true;
         do
-                echo "INFO: Waiting for checkpoint (retry count: "${retry_counter}")"
-
-		check_container_running "${tmp_image_name}" "${container_name}"
-		if [ $? -eq 1 ]; then
-			echo "ERROR: container has stopped"
-			exit 1
+                echo "INFO: Checking if application started (retry counter=${retry_counter})"
+		if [ "${LOG_LOCATION}" = "stdout" ];then
+			docker logs "${container_name}" 2>&1 | grep "${LOG_MESSAGE}" &> /dev/null
+		else
+			docker exec "${container_name}" grep "${LOG_MESSAGE}" "${LOG_LOCATION}" &> /dev/null
 		fi
-
-                docker logs --tail=1 "${container_name}" | grep "${CHECKPOINT_SUCCESS_MSG}" &> /dev/null
-
-                if [ $? -eq 0 ]; then
-                        echo "INFO: Checkpoint done."
-                        break
+                local app_started=$?
+                if [ ${app_started} -eq 0 ]; then
+                        echo "INFO: Application started successfully!"
+			break
+                else
+                        if [ $retry_counter -eq ${TIMEOUT} ]; then
+                                echo "ERROR: Application did not start properly"
+                                exit 1
+                        fi
+                        retry_counter=$(($retry_counter+1))
+                        sleep 1s
                 fi
-                if [ "${retry_counter}" -eq ${TIMEOUT} ]; then
-                        echo "ERROR: Checkpoint timed out"
-                        exit 1
-                fi
-                retry_counter=$(($retry_counter+1))
-                sleep 1s
         done
+}
+
+get_app_pid() {
+	echo `docker exec "${container_name}" ps -ef | grep java | grep -v grep | awk '{ print $2 }'`
+}
+
+create_checkpoint() {
+	check_server_started
+	if [ $? -eq 0 ]; then
+		app_pid=$(get_app_pid)
+		echo "INFO: App pid in container is ${app_pid}"
+		if [ "${CONTAINER_USER}" = "root" ]; then
+			cmd="criu dump -t "${app_pid}" --tcp-established -j -v4 -o "${CR_LOG_DIR}/${DUMP_LOG_FILE}""
+		else
+			cmd="sudo criu dump -t "${app_pid}" --tcp-established -j -v4 -o "${CR_LOG_DIR}/${DUMP_LOG_FILE}""
+		fi
+		echo "CMD (container): ${cmd}"
+		docker exec --privileged "${container_name}" bash -c "${cmd}"
+		if [ "${CONTAINER_USER}" = "root" ]; then
+			docker exec "${container_name}" bash -c "chmod 755 "${CR_LOG_DIR}/${DUMP_LOG_FILE}""
+		else
+			docker exec "${container_name}" bash -c "sudo chmod 755 "${CR_LOG_DIR}/${DUMP_LOG_FILE}""
+		fi
+	fi
 }
 
 commit_container() {
@@ -73,13 +98,13 @@ commit_container() {
 	echo "CMD: ${cmd}"
 	${cmd} &> /dev/null
 
-	cmd="docker rm "${container_name}""
-	echo "CMD: ${cmd}"
-	${cmd} &> /dev/null
+	#cmd="docker rm "${container_name}""
+	#echo "CMD: ${cmd}"
+	#${cmd} &> /dev/null
 }
 
 build_docker_image
 run_container
-wait_for_checkpoint
+create_checkpoint
 commit_container
 

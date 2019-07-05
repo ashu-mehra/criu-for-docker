@@ -1,16 +1,15 @@
 #!/bin/bash
 
+DOCKER_IMAGE_OS=ubuntu
+
 LOG_MESSAGE="<application specific message>"
 LOG_LOCATION="<applicaton specific log file>"
 TIMEOUT=100
-
-CHECKPOINT_SUCCESS_MSG="Checkpoint success"
-CHECKPOINT_FAILED_MSG="Checkpoint failed"
+CONTAINER_USER=root
 
 CR_LOG_DIR="/opt/appcr/cr_logs"
 DUMP_LOG_FILE="dump.log"
 RESTORE_LOG_FILE="restore.log"
-APP_PID_FILE="app.pid"
 
 APP_DOCKER_IMAGE="<application docker image>"
 APP_CR_DOCKER_IMAGE="<application docker image containing checkpoint>"
