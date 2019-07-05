@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # trampoline script to start the application
+test_case=$1
+app_image=$2
+app_container=$3
 
-app_image=$1
-app_container=$2
-
-./run_acmeair.sh $@
+./${test_case}/run_${test_case}.sh $@
