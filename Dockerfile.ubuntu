@@ -1,4 +1,4 @@
-FROM <app image>
+FROM <application docker image>
 
 ARG user=root
 USER root
@@ -21,10 +21,13 @@ RUN mkdir -p /opt/appcr/cr_logs \
 
 ADD common_env_vars.sh /opt/appcr/common_env_vars.sh
 ADD appcr.sh /opt/appcr/appcr.sh
+ADD app_env_vars.sh /opt/appcr/app_env_vars.sh
 ADD app.sh /opt/appcr/app.sh
 
 RUN chown -R ${user}:0 /opt/appcr/common_env_vars.sh \
     && chmod -R g+rw /opt/appcr/common_env_vars.sh \
+    && chown -R ${user}:0 /opt/appcr/app_env_vars.sh \
+    && chmod -R g+rw /opt/appcr/app_env_vars.sh \
     && chown -R ${user}:0 /opt/appcr/appcr.sh \
     && chmod -R g+rw /opt/appcr/appcr.sh \
     && chown -R ${user}:0 /opt/appcr/app.sh \
