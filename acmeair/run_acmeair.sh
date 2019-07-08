@@ -18,8 +18,8 @@ cleanup() {
 	echo "INFO: Cleanup - Done"
 }
 
-app_image=$1
-app_container=$2
+app_image=$2
+app_container=$3
 
 if [ -z "${app_image}" ]; then
 	app_image="${APP_DOCKER_IMAGE}"

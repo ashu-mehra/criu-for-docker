@@ -3,9 +3,14 @@
 source ./util.sh
 source ./common_env_vars.sh
 
-test_case=$1
+app=$1
 
-source ./${test_case}/app_env_vars.sh
+if [ -z "${app}" ]; then
+	echo "ERROR: Missing test case name"
+	exit 1
+fi
+
+source ./${app}/app_env_vars.sh
 
 tmp_image_name="${APP_DOCKER_IMAGE}-tmp"
 container_name="app-container-for-cr"
@@ -14,8 +19,9 @@ build_docker_image() {
 	if [ -z "${DOCKER_IMAGE_OS}" ]; then
 		DOCKER_IMAGE_OS=ubuntu
 	fi
-	sed -i -e "s|<app image>|$APP_DOCKER_IMAGE|" Dockerfile.${DOCKER_IMAGE_OS}
-	cmd="docker build -q --build-arg user=${CONTAINER_USER} -t "${tmp_image_name}" -f ./${test_case}/Dockerfile.${DOCKER_IMAGE_OS} ."
+	cp Dockerfile.${DOCKER_IMAGE_OS} ./${app}
+	sed -i -e "s|<app image>|$APP_DOCKER_IMAGE|" ./${app}/Dockerfile.${DOCKER_IMAGE_OS}
+	cmd="docker build --build-arg user=${CONTAINER_USER} --build-arg app=${app} -t "${tmp_image_name}" -f ./${app}/Dockerfile.${DOCKER_IMAGE_OS} ."
 	echo "CMD: ${cmd}"
 	${cmd}
 
@@ -27,7 +33,12 @@ build_docker_image() {
 }
 
 run_container() {
-	./run_app_docker_image.sh "${test_case}" "${tmp_image_name}" "${container_name}"
+	if [ -f ${app}/run_${app}.sh ]; then
+		${app}/run_${app}.sh "${app}" "${tmp_image_name}" "${container_name}"
+	else
+		echo "ERROR: ${app}/run_${app}.sh is missing"
+		exit 1
+	fi
 
 	check_container_running "${tmp_image_name}" "${container_name}"
 	if [ $? -eq 1 ]; then

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 source ./common_env_vars.sh
-source ./app.sh
+source ./app_env_vars.sh
 
 run() {
 	if [ ${CONTAINER_USER} = "root" ]; then
@@ -50,7 +50,7 @@ else
 	# checkpoint does not exist, run the app and checkpoint it
 	echo "INFO: Starting the app to checkpoint it"
 	run /bin/echo ${APP_START_PID} > /proc/sys/kernel/ns_last_pid
-	start_app "$@" # from app.sh
+	./run_app.sh $@
 
 	trap 'quit=1' TERM
 	quit=0
