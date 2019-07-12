@@ -10,3 +10,7 @@ APP_DOCKER_IMAGE="ashumehra/acmeair-monolithic:latest"
 APP_CR_DOCKER_IMAGE="ashumehra/acmeair-cr-monolithic:latest"
 
 ACMEAIR_CONTAINER="acmeair-server"
+DOCKER_NETWORK="acmeair-net"
+MONGO_DB_IMAGE="mongo"
+MONGO_DB_CONTAINER="acmeair-db"
+

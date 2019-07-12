@@ -34,7 +34,9 @@ build_docker_image() {
 
 run_container() {
 	if [ -f ${app}/run_${app}.sh ]; then
-		${app}/run_${app}.sh "${app}" "${tmp_image_name}" "${container_name}"
+		pushd ${app}
+		./run_${app}.sh "${app}" "${tmp_image_name}" "${container_name}"
+		popd
 	else
 		echo "ERROR: ${app}/run_${app}.sh is missing"
 		exit 1

@@ -1,23 +1,8 @@
 #!/bin/bash
 
-source ./common_env_vars.sh
-source ./util.sh
+source ./app_env_vars.sh
 
-cleanup() {
-	echo "INFO: Cleanup - Started"
-	echo "INFO: Cleaning running containers"
-
-	cmd="docker stop "${app_container}""
-	echo "CMD: ${cmd}"
-	${cmd} &> /dev/null
-
-	cmd="docker rm "${app_container}""
-	echo "CMD: ${cmd}"
-	${cmd} &> /dev/null
-
-	echo "INFO: Cleanup - Done"
-}
-
+app=$1
 app_image=$2
 app_container=$3
 
@@ -28,19 +13,15 @@ if [ -z "${app_container}" ]; then
 	app_container="${ACMEAIR_CONTAINER}"
 fi
 
-# remove existing containers and images if any
-cleanup
-
-cmd="docker run --name="${app_container}" "${DOCKER_CAPABILITIES}" "${DOCKER_SECURITY_OPTS}" -d -p 8080:8080 "${app_image}""
-echo "CMD: ${cmd}"
-
-acmeair_server=`${cmd}`
-
+./cleanup.sh "${app_container}"
+./setup.sh
 if [ $? -ne 0 ]; then
-	echo "ERROR: Failed to start acmeair server container"
+	echo "ERROR: error in setting up acmeair"
 	exit 1
 fi
 
-echo "INFO: Acmeair server container id ${acmeair_server}"
-echo "INFO: Starting acmeair server container - Done"
-
+./start_acmeair.sh "${app_image}" "${app_container}" "8080" "172.28.0.3"
+if [ $? -ne 0 ]; then
+	echo "ERROR: error in starting up acmeair"
+	exit 1
+fi
