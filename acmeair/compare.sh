@@ -11,7 +11,7 @@ echo "Starting acmeair using checkpoint"
 
 sleep 25s
 
-docker stop acmeair-base &> /dev/null &
-docker stop acmeair-criu &> /dev/null &
+docker stop acmeair-base &> /dev/null 
+docker stop acmeair-criu &> /dev/null 
 
 docker container prune -f &> /dev/null &
