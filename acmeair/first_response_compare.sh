@@ -13,7 +13,9 @@ done
 end_time=`date +"%s.%3N"`
 diff=`echo "$end_time-$start_time" | bc`
 echo "Response time: ${diff} seconds"
-docker stop acmeair-base &>/dev/null &
+echo -n "Stopping the container ... "
+docker stop acmeair-base &>/dev/null 
+echo "Done"
 
 sleep 5s
 echo
@@ -25,6 +27,8 @@ while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:8080/flights.html
 end_time=`date +"%s.%3N"`
 diff=`echo "$end_time-$start_time" | bc`
 echo "Response time: ${diff} seconds"
-docker stop acmeair-criu &> /dev/null &
+echo -n "Stopping the container ... "
+docker stop acmeair-criu &> /dev/null 
+echo "Done"
 
 docker container prune -f &> /dev/null &
