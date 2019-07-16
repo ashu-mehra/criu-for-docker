@@ -6,8 +6,26 @@ source ./common_env_vars.sh
 app=$1
 
 if [ -z "${app}" ]; then
-	echo "ERROR: Missing test case name"
-	exit 1
+	echo "ERROR: app name is required"
+	exit 1;
+fi
+if [ ! -d "${app}" ]; then
+	echo "ERROR: directory with app name is not present"
+	exit 1;
+fi
+
+# check required files are present
+if [ ! -f ${app}/run_${app}.sh ]; then
+	echo "ERROR: ${app}/run_${app}.sh is missing"
+	exit 1;
+fi
+if [ ! -f ${app}/run_app.sh ]; then
+	echo "ERROR: ${app}/run_app.sh is missing"
+	exit 1;
+fi
+if [ ! -f ${app}/app_env_vars.sh ]; then
+	echo "ERROR: ${app}/app_env_vars.sh is missing"
+	exit 1;
 fi
 
 source ./${app}/app_env_vars.sh
@@ -21,9 +39,11 @@ build_docker_image() {
 	fi
 	cp Dockerfile.${DOCKER_IMAGE_OS} ./${app}
 	sed -i -e "s|<app image>|$APP_DOCKER_IMAGE|" ./${app}/Dockerfile.${DOCKER_IMAGE_OS}
-	cmd="docker build --build-arg user=${CONTAINER_USER} --build-arg app=${app} -t "${tmp_image_name}" -f ./${app}/Dockerfile.${DOCKER_IMAGE_OS} ."
+	echo "Building temporary docker image ... "
+	cmd="docker build --build-arg user=${CONTAINER_USER} --build-arg app=${app} -g -t "${tmp_image_name}" -f ./${app}/Dockerfile.${DOCKER_IMAGE_OS} ."
 	echo "CMD: ${cmd}"
-	${cmd}
+	${cmd} &>/dev/null
+	echo "Done"
 
 	check_image_exists "${tmp_image_name}"
 	if [ $? -eq 1 ]; then
@@ -33,14 +53,9 @@ build_docker_image() {
 }
 
 run_container() {
-	if [ -f ${app}/run_${app}.sh ]; then
-		pushd ${app}
-		./run_${app}.sh "${app}" "${tmp_image_name}" "${container_name}"
-		popd
-	else
-		echo "ERROR: ${app}/run_${app}.sh is missing"
-		exit 1
-	fi
+	pushd ${app} &>/dev/null
+	./run_${app}.sh "${app}" "${tmp_image_name}" "${container_name}"
+	popd &>/dev/null
 
 	check_container_running "${tmp_image_name}" "${container_name}"
 	if [ $? -eq 1 ]; then
