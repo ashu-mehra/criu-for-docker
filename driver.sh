@@ -40,7 +40,7 @@ build_docker_image() {
 	cp Dockerfile.${DOCKER_IMAGE_OS} ./${app}
 	sed -i -e "s|<app image>|$APP_DOCKER_IMAGE|" ./${app}/Dockerfile.${DOCKER_IMAGE_OS}
 	echo "Building temporary docker image ... "
-	cmd="docker build --build-arg user=${CONTAINER_USER} --build-arg app=${app} -g -t "${tmp_image_name}" -f ./${app}/Dockerfile.${DOCKER_IMAGE_OS} ."
+	cmd="docker build --build-arg user=${CONTAINER_USER} --build-arg app=${app} -q -t "${tmp_image_name}" -f ./${app}/Dockerfile.${DOCKER_IMAGE_OS} ."
 	echo "CMD: ${cmd}"
 	${cmd} &>/dev/null
 	echo "Done"
