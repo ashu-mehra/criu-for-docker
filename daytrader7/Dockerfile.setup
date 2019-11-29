@@ -1,0 +1,12 @@
+FROM adoptopenjdk/openjdk8-openj9 AS builder
+
+WORKDIR /root
+USER root
+RUN apt-get update && apt-get install -y --no-install-recommends git maven && rm -rf /var/lib/apt/lists/*
+RUN git clone --depth 1 https://github.com/WASdev/sample.daytrader7.git \
+    && cd sample.daytrader7 && mvn install
+
+FROM open-liberty
+COPY --from=builder --chown=1001:0 /root/sample.daytrader7/daytrader-ee7-wlpcfg/servers/daytrader7Sample /opt/ol/wlp/usr/servers/defaultServer
+COPY --from=builder --chown=1001:0 /root/sample.daytrader7/daytrader-ee7-wlpcfg/shared /opt/ol/wlp/usr/shared
+RUN configure.sh
