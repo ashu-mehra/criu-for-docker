@@ -1,4 +1,4 @@
-FROM daytrader7v3:latest
+FROM pingperf:latest
 
 ARG user=root
 USER root

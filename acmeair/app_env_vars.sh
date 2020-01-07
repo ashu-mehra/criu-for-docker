@@ -6,11 +6,10 @@ CONTAINER_USER=default
 LOG_MESSAGE="The defaultServer server is ready to run a smarter planet"
 LOG_LOCATION="/logs/messages.log"
 
-APP_DOCKER_IMAGE="ashumehra/acmeair-monolithic:latest"
-APP_CR_DOCKER_IMAGE="ashumehra/acmeair-cr-monolithic:latest"
+APP_DOCKER_IMAGE="liberty-acmeair"
+APP_CR_DOCKER_IMAGE="liberty-acmeair-cr"
 
-ACMEAIR_CONTAINER="acmeair-server"
-DOCKER_NETWORK="acmeair-net"
-MONGO_DB_IMAGE="mongo"
-MONGO_DB_CONTAINER="acmeair-db"
+ACMEAIR_CONTAINER="acmeair"
+MONGO_DB_IMAGE="mongo-acmeair"
+MONGO_DB_CONTAINER="mongodb"
 

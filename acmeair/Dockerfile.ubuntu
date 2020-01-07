@@ -1,4 +1,4 @@
-FROM ashumehra/acmeair-monolithic:latest
+FROM liberty-acmeair
 
 ARG user=root
 USER root

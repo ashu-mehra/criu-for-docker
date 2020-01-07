@@ -25,6 +25,8 @@ check_pid_restore_possible() {
 restore_from_checkpoint() {
 	check_pid_restore_possible
 	if [ $? -eq 0 ]; then
+		beforeRestore=`date +"%s.%3N"`
+		echo "before restore: ${beforeRestore}"
 		cmd="criu restore --tcp-established -j -v3 -o ${CR_LOG_DIR}/${RESTORE_LOG_FILE}"
 		echo "CMD: ${cmd}"
 		run ${cmd}
@@ -38,8 +40,12 @@ restore_from_checkpoint() {
 
 # by default /proc is read-only in docker container,
 # remount it as read-write
+onEntry=`date +"%s.%3N"`
+echo "onEntry: ${onEntry}"
 run umount -R /proc
 run mount -t proc proc /proc
+afterRemount=`date +"%s.%3N"`
+echo "after mounting proc as read-write: ${afterRemount}"
 APP_START_PID=100
 
 if [ -f ${CR_LOG_DIR}/${DUMP_LOG_FILE} ]; then

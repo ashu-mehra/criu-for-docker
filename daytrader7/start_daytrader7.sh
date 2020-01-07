@@ -17,7 +17,7 @@ if [ -z "${host_port}" ]; then
         host_port=8080
 fi
 
-cmd="docker run --name="${app_container}" "${DOCKER_CAPABILITIES}" "${DOCKER_SECURITY_OPTS}" -d -p ${host_port}:9082 "${app_image}""
+cmd="docker run --rm --cpuset-cpus=0,1,32,33 --cpuset-mems=0 --name="${app_container}" --env-file=java.env "${DOCKER_CAPABILITIES}" "${DOCKER_SECURITY_OPTS}" -d -p ${host_port}:9082 "${app_image}""
 echo "CMD: ${cmd}"
 
 daytrader_server=`${cmd}`

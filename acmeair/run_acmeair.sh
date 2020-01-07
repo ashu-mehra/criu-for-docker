@@ -13,14 +13,9 @@ if [ -z "${app_container}" ]; then
 	app_container="${ACMEAIR_CONTAINER}"
 fi
 
-./cleanup.sh "${app_container}"
-./setup.sh
-if [ $? -ne 0 ]; then
-	echo "ERROR: error in setting up acmeair"
-	exit 1
-fi
+./run_mongo.sh
 
-./start_acmeair.sh "${app_image}" "${app_container}" "8080" "172.28.0.3"
+./start_acmeair.sh "${app_image}" "${app_container}" "8080"
 if [ $? -ne 0 ]; then
 	echo "ERROR: error in starting up acmeair"
 	exit 1

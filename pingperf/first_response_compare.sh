@@ -18,16 +18,16 @@ check_server_started() {
         done
 }
 
-test_acmeair_su() {
+test_pingperf_su() {
 	isColdRun=$1
-	echo "Starting acmeair using original image for startup measurement"
+	echo "Starting pingperf using original image for startup measurement"
 	start_time=`date +"%s.%3N"`
-	./start_acmeair.sh "${APP_DOCKER_IMAGE}" "acmeair-base-su" "9082" &
+	./start_pingperf.sh "${APP_DOCKER_IMAGE}" "pingperf-base-su" "9082" &
 	sleep 3s
 	echo "Waiting..."
-	check_server_started "acmeair-base-su"
+	check_server_started "pingperf-base-su"
 	if [ $? -eq 0 ]; then
-		startupMsg=`docker exec acmeair-base-su grep "${LOG_MESSAGE}" "${LOG_LOCATION}"`
+		startupMsg=`docker exec pingperf-base-su grep "${LOG_MESSAGE}" "${LOG_LOCATION}"`
 		end_time=`perl getLibertyStartTime.pl "$startupMsg"`
 	fi
 	diff=`echo "$end_time-$start_time" | bc`
@@ -35,25 +35,25 @@ test_acmeair_su() {
 	echo "End time: ${end_time}"
 	echo "Response time: ${diff} seconds"
 	if [ $1 -eq 0 ]; then
-		acmeair_su+=(${diff})
+		pingperf_su+=(${diff})
 	else
 		echo "Ignoring this as cold run"
 	fi
 	echo -n "Stopping the container ... "
-	docker stop acmeair-base-su &>/dev/null 
-	docker rm acmeair-base-su &>/dev/null 
+	docker stop pingperf-base-su &>/dev/null 
+	docker rm pingperf-base-su &>/dev/null 
 	sleep 5s
 	echo "Done"
 }
 
-test_acmeair_fr() {
+test_pingperf_fr() {
 	isColdRun=$1
-	echo "Starting acmeair using original image"
+	echo "Starting pingperf using original image"
 	start_time=`date +"%s.%3N"`
-	./start_acmeair.sh "${APP_DOCKER_IMAGE}" "acmeair-base" "9082" &
+	./start_pingperf.sh "${APP_DOCKER_IMAGE}" "pingperf-base" "9082" &
 	sleep 1s
 	echo "Waiting ..."
-	while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:9082/flights.html)" != "200" ]]; do 
+	while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:9082/pingperf/ping/greeting)" != "200" ]]; do 
 		sleep .00001;
 	done
 	end_time=`date +"%s.%3N"`
@@ -62,55 +62,52 @@ test_acmeair_fr() {
 	echo "End time: ${end_time}"
 	echo "Response time: ${diff} seconds"
 	if [ $1 -eq 0 ]; then
-		acmeair_fr+=(${diff})
+		pingperf_fr+=(${diff})
 	else
 		echo "Ignoring this as cold run"
 	fi
 	echo -n "Stopping the container ... "
-	docker stop acmeair-base &>/dev/null 
-	docker rm acmeair-base &>/dev/null 
+	docker stop pingperf-base &>/dev/null 
+	docker rm pingperf-base &>/dev/null 
 	sleep 5s
 	echo "Done"
 }
 
-test_acmeair_fr_criu() {
+test_pingperf_fr_criu() {
 	isColdRun=$1
-	echo "Starting acmeair using checkpoint"
+	echo "Starting pingperf using checkpoint"
 	start_time=`date +"%s.%3N"`
-	./start_acmeair.sh "${APP_CR_DOCKER_IMAGE}" "acmeair-criu" "9084" &
+	./start_pingperf.sh "${APP_CR_DOCKER_IMAGE}" "pingperf-criu" "9084" &
 	sleep .01
 	echo "Waiting ..."
-	while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:9084/flights.html)" != "200" ]]; do sleep .00001; done
+	while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:9084/pingperf/ping/greeting)" != "200" ]]; do sleep .00001; done
 	end_time=`date +"%s.%3N"`
 	diff=`echo "$end_time-$start_time" | bc`
 	echo "Start time: ${start_time}"
 	echo "End time: ${end_time}"
 	echo "Response time: ${diff} seconds"
 	if [ $1 -eq 0 ]; then
-		acmeair_fr_criu+=(${diff})
+		pingperf_fr_criu+=(${diff})
 	else
 		echo "Ignoring this as cold run"
 	fi
-
-        onEntry=`docker logs acmeair-criu | grep "onEntry" | cut -d ':' -f 2`
-        afterRemount=`docker logs acmeair-criu | grep "after mounting" | cut -d ':' -f 2`
-        beforeRestore=`docker logs acmeair-criu | grep "before restore" | cut -d ':' -f 2`
-        diff=`echo "${afterRemount}-${onEntry}" | bc`
-        echo "time to remount proc: ${diff}"
-        diff=`echo "${beforeRestore}-${onEntry}" | bc`
-        echo "time taken before restoring: ${diff}"
-        restore_time=`docker exec acmeair-criu crit show stats-restore | grep restore_time | cut -d ':' -f 2 | cut -d ',' -f 1`
-        echo "time to restore: " $((${restore_time}/1000))
-
+	onEntry=`docker logs pingperf-criu | grep "onEntry" | cut -d ':' -f 2`
+	afterRemount=`docker logs pingperf-criu | grep "after mounting" | cut -d ':' -f 2`
+	beforeRestore=`docker logs pingperf-criu | grep "before restore" | cut -d ':' -f 2`
+	diff=`echo "${afterRemount}-${onEntry}" | bc`
+	echo "time to remount proc: ${diff}"
+	diff=`echo "${beforeRestore}-${onEntry}" | bc`
+	echo "time taken before restoring: ${diff}"
+	restore_time=`docker exec pingperf-criu crit show stats-restore | grep restore_time | cut -d ':' -f 2 | cut -d ',' -f 1`
+	echo "time to restore: " $((${restore_time}/1000))
 	echo -n "Stopping the container ... "
-	docker stop acmeair-criu &> /dev/null 
-	docker rm acmeair-criu &> /dev/null 
+	docker stop pingperf-criu &> /dev/null 
+	docker rm pingperf-criu &> /dev/null 
 	sleep 15s
 	echo "Done"
 }
 
 cleanup() {
-	docker stop mongodb
 	docker container prune -f &> /dev/null &
 }
 
@@ -138,7 +135,7 @@ get_averages() {
 print_summary() {
 	echo "########## Summary ##########"
 	printf "\t"
-	for key in ${headers[@]}
+	for key in ${headers[@]};
 	do
 		printf "%-15s" "${key}"
 	done
@@ -166,7 +163,7 @@ print_summary() {
 	echo
 }
 
-declare -a headers=("acmeair_su" "acmeair_fr" "acmeair_fr_criu")
+declare -a headers=("pingperf_su" "pingperf_fr" "pingperf_fr_criu") # ("pingperf_su" "pingperf_fr" "pingperf_fr_criu")
 
 declare -A values
 declare -A averages
@@ -175,20 +172,18 @@ do
 	averages[$key]=0
 done
 
-declare -a acmeair_su acmeair_fr acmeair_fr_criu
+declare -a pingperf_su pingperf_fr pingperf_fr_criu
 
 if [ $# -lt 2 ]; then
 	echo "Invalid number of arguments; please pass number of batches and iterations\n"
 	exit -1	
 fi
 
-./run_mongo.sh
-
 batches=$1
 iterations=$2
 for batch in `seq 1 ${batches}`;
 do
-	for key in ${headers[@]}
+	for key in ${headers[@]};
 	do
 		echo "Cold run for batch ${batch}"
 		test_${key} 1
@@ -203,9 +198,9 @@ done
 
 cleanup
 
-values["acmeair_su"]=${acmeair_su[@]}
-values["acmeair_fr"]=${acmeair_fr[@]}
-values["acmeair_fr_criu"]=${acmeair_fr_criu[@]}
+values["pingperf_su"]=${pingperf_su[@]}
+values["pingperf_fr"]=${pingperf_fr[@]}
+values["pingperf_fr_criu"]=${pingperf_fr_criu[@]}
 
 get_averages
 print_summary
